@@ -1755,11 +1755,103 @@
           parseRecords(mock);
        }, 500);
     }
-
     window.addEventListener('DOMContentLoaded', () => {
-      initMap();
-      loadMockData();
+  initMap();
+  carregarExcelAutomatico();
+});
+
+async function carregarExcelAutomatico() {
+
+  try {
+
+    const response = await fetch('./logistic.xlsx');
+
+    const data = await response.arrayBuffer();
+
+    const workbook = XLSX.read(data, {
+      type: 'array'
     });
+
+    const vesselSheetName = workbook.SheetNames.find(
+      s => s.toLowerCase().includes('vessel')
+    );
+
+    if (vesselSheetName) {
+      const vesselRows =
+        XLSX.utils.sheet_to_json(
+          workbook.Sheets[vesselSheetName],
+          { defval: "" }
+        );
+
+      parseVesselRecords(
+        vesselRows,
+        workbook.Sheets[vesselSheetName]
+      );
+
+      loadCarImages(
+        workbook.Sheets[vesselSheetName]
+      );
+    }
+
+    const transSheetName =
+      workbook.SheetNames.find(
+        s =>
+        s.toLowerCase().includes('transport')
+      );
+
+    if (transSheetName) {
+
+      const transRows =
+        XLSX.utils.sheet_to_json(
+          workbook.Sheets[transSheetName],
+          { defval: "" }
+        );
+
+      parseTransportationRecords(
+        transRows
+      );
+    }
+
+    const shippedSheetName =
+      workbook.SheetNames.find(
+        s =>
+        s.toLowerCase().includes('shipped')
+      );
+
+    if (shippedSheetName) {
+      allRawShippedRows =
+        XLSX.utils.sheet_to_json(
+          workbook.Sheets[shippedSheetName],
+          { defval: "" }
+        );
+    }
+
+    const sheetName =
+      workbook.SheetNames.find(
+        s => s.trim().toLowerCase() === 'vin'
+      ) || workbook.SheetNames[0];
+
+    const rows =
+      XLSX.utils.sheet_to_json(
+        workbook.Sheets[sheetName],
+        { defval: "" }
+      );
+
+    parseRecords(rows);
+
+    document.getElementById(
+      'lastUpdateTs'
+    ).innerText =
+      new Date().toLocaleString();
+
+  } catch (err) {
+
+    console.error(err);
+
+    loadMockData();
+
+  }
+}
   </script>
 </body>
 </html>
